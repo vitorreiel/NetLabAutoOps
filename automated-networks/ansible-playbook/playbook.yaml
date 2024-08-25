@@ -1,0 +1,18 @@
+- name: Iniciando Conexão com Amazon Web Services
+  hosts: localhost
+  vars_files:
+  - vars/main.yaml
+
+  roles:
+    - create-modules
+    - create-instance
+    - describe-instance
+
+- name: Iniciando conexão com a instância EC2
+  hosts: '{{ instance_name }}'
+  become: true
+  vars_files:
+  - vars/main.yaml
+
+  roles:
+    - instance-configuration
