@@ -1,0 +1,28 @@
+- name: Obtendo dados da instância de rede emulada
+  amazon.aws.ec2_instance_info:
+    region: "{{ region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    aws_session_token: "{{ aws_session_token }}"
+    filters:
+      instance.group-name: [ "{{ security_group_name }}" ]
+      key-name: [ "{{ key_name }}" ]
+      "tag:Name": "{{ instance_name }}"
+  register: result
+  retries: 10
+  delay: 30
+  until: '"running" in result.instances.0.state.name'
+  ignore_errors: true
+
+- name: Enviando dados para o arquivo de configuração hosts
+  shell: sed -i "2s/[^>]*/{{ instance_name }} ansible_host={{ result.instances.0.public_ip_address }} ansible_ssh_common_args='-o StrictHostKeyChecking=no'/g" {{ repo_hosts }}
+
+- name: Salvando endereço nas variáveis de ambiente 
+  shell: "sed -i '/public_ip:/{s/.*/public_ip: {{ result.instances.0.public_ip_address }}/}' {{ repo_vars }}"
+
+- name: Atualizando configurações no arquivo hosts
+  meta: refresh_inventory
+
+- name: Aguardando atualização dos hosts
+  shell: sleep 20
+  changed_when: true

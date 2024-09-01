@@ -1,0 +1,35 @@
+- name: Checando atualizações do sistema
+  apt:
+    update_cache: true
+
+- name: Mudando Hostname da instância
+  ansible.builtin.hostname:
+    name: "{{ instance_name }}"
+
+- name: Baixando e executando repositório de instalação Docker
+  shell: curl -fsSL '{{ repo_docker }}' | bash
+
+- name: Adicionar usuário ubuntu ao grupo Docker
+  user:
+    name: ubuntu
+    groups: docker
+    append: yes
+
+- name: Movendo arquivo de configuração
+  copy:
+    src: '{{ repo_utils }}'
+    dest: '{{ repo_dest }}'
+    mode: '777'
+  when: not (ansible_check_mode | bool)
+
+- name: Instalando Open vSwitch
+  apt:
+    name: openvswitch-switch
+    state: present
+
+- name: Executando contêiner Docker com topologia de rede
+  shell: ./'{{ repo_start }}'
+
+- name: Confirmando execução dos Contêineres
+  shell: sleep 10
+  changed_when: true
