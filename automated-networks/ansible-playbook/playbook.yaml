@@ -16,3 +16,20 @@
 
   roles:
     - instance-configuration
+
+- hosts: localhost
+  vars_files:
+  - vars/main.yaml
+
+  tasks:
+    
+    - name: Obtendo endereço da instância
+      shell: sed -n '2s/.*ansible_host=\([0-9.]*\).*/\1/p' {{ repo_hosts }}
+      register: link
+
+    - name: Disponibilizando link de interface da controladora ONOS
+      debug:
+        msg:
+        - Acesse a GUI clicando aqui >> http://{{ link.stdout_lines.0 }}:8181/onos/ui/login.html
+        - User >> onos
+        - Password >> rocks

@@ -19,4 +19,5 @@ repo_hosts: hosts
 repo_vars: vars/main.yaml
 repo_dest: /opt/
 repo_utils: ../../utils/network-components
+repo_topology: ../../utils/network-components/topology/topology.py
 repo_start: ../../opt/network-components/start.sh
