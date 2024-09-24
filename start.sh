@@ -208,7 +208,23 @@ EOF
     esac
 
 elif [[ "$confirmacao" =~ ^(2|02)$ ]]; then
-    echo -e "\n\033[1;33m- [ Em desenvolvimento... ] \033[0m"
+    echo -e "\n\n\033[1;32m- [ Qual ferramenta será usada para destruir o cenário? ] \033[0m\n"
+    sleep 0.5
+    echo -e "\n\033[1;34m- [ 1 ] : Ansible \033[0m"
+    sleep 0.5
+    echo -e "\n\033[1;34m- [ 2 ] : Terraform \033[0m\n"
+    sleep 0.5
+    echo -e '\n\033[1;35m- [ Por favor, digite o valor correspondente: ] \033[0m'
+    read destroy
+
+    case $destroy in
+    1|01)
+    esac
+	ansible-playbook -i automated-networks/ansible-playbook/hosts automated-networks/ansible-playbook/playbook-destroy.yaml
+    case $destroy in
+    2|02)
+        terraform -chdir=automated-networks/terraform destroy -auto-approve
+    esac
 else
     echo -e "\n\033[1;33m- [ Desculpe, valor não encontrado, encerrando terminal... ] \033[0m"
 fi
