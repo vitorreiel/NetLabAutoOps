@@ -20,7 +20,31 @@ resource "aws_security_group" "main" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow SSH access"
+    description = "Porta para acesso SSH"
+  }
+
+  ingress {
+    from_port   = 8181
+    to_port     = 8181
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Altere conforme necessário para restringir o acesso
+    description = "Porta de interface do ONOS"
+  }
+
+  ingress {
+    from_port   = 6653
+    to_port     = 6653
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Altere conforme necessário para restringir o acesso
+    description = "Uma das portas usadas pelo OpenFlow"
+  }
+
+  ingress {
+    from_port   = 6633
+    to_port     = 6633
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Altere conforme necessário para restringir o acesso
+    description = "Uma das portas usadas pelo OpenFlow"
   }
 
   egress {
@@ -76,6 +100,10 @@ resource "aws_instance" "web" {
     host        = aws_instance.web.public_ip
   }
 
+  provisioner "local-exec" {
+    command = "sed -i 's/localhost/${self.public_ip}/g' ../../utils/network-components/topology/topology.py"
+  }
+
   provisioner "file" {
     source = "../../utils/network-components"
     destination = "/home/ubuntu/network-components"
@@ -94,3 +122,13 @@ resource "aws_instance" "web" {
     ]
   }
 }
+
+  output "instance_ip" {
+    value = "link de acesso >> http://${aws_instance.web.public_ip}:8181/onos/ui/login.html"
+    description = "O link de acesso à instância EC2."
+  }
+
+  output "login_info" {
+    value = "User >> onos, Password >> rocks"
+    description = "Informações de login."
+  }

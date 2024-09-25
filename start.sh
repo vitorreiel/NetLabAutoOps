@@ -57,7 +57,7 @@ if [[ "$confirmacao" =~ ^(1|01)$ ]]; then
 #!/usr/bin/python
 
 from mininet.net import Containernet
-from mininet.node import Controller
+from mininet.node import Controller, RemoteController
 from mininet.cli import CLI
 from mininet.log import info, setLogLevel
 import sys
@@ -67,7 +67,7 @@ def topology(args):
     net = Containernet(controller=Controller)
 
     info("*** Creating nodes\\n")
-    C1 = net.addController('C1')
+    C1 = net.addController(name='C1', controller=RemoteController, ip='localhost', protocol='tcp', port=6633)
 EOF
 
     if [ "$topologia" == "1" ] || [ "$topologia" == "01" ]; then
@@ -120,6 +120,7 @@ EOF
     cat <<EOF >> $temp_file
     info("*** Starting network\\n")
     net.start()
+    net.pingAll()
 
     info("*** Running CLI\\n")
     CLI(net)
@@ -182,7 +183,7 @@ EOF
         sudo apt update -y > /dev/null 2>&1
         sudo apt install git python3 python3-pip ansible -y > /dev/null 2>&1
         pip install boto3 ansible-core==2.16.0 Jinja2==3.1.3 urllib3==1.26.5 > /dev/null 2>&1
-        ansible-galaxy collection install community.aws > /dev/null 2>&1
+        ansible-galaxy collection install community.aws --force > /dev/null 2>&1
         awk -v new_value_1="$aws_access_key" 'NR == 2 {print "aws_access_key: " new_value_1} NR != 2' "$arquivo_destino" > tmpfile && mv tmpfile "$arquivo_destino"
         awk -v new_value_2="$aws_secret_key" 'NR == 3 {print "aws_secret_key: " new_value_2} NR != 3' "$arquivo_destino" > tmpfile && mv tmpfile "$arquivo_destino"
         awk -v new_value_3="$aws_session_token" 'NR == 4 {print "aws_session_token: " new_value_3} NR != 4' "$arquivo_destino" > tmpfile && mv tmpfile "$arquivo_destino"
@@ -200,14 +201,30 @@ EOF
         sudo apt-get update && sudo apt-get install -y gnupg software-properties-common curl > /dev/null 2>&1
         curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add - > /dev/null 2>&1
         echo "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list > /dev/null 2>&1
-        sudo apt-get install -y terraform > /dev/null 2>&1
+        sudo apt-get install terraform -y  > /dev/null 2>&1
         sed -i -e "4s|.*|  default = \"$aws_access_key\"|" -e "10s|.*|  default = \"$aws_secret_key\"|" -e "16s|.*|  default = \"$aws_session_token\"|" "$arquivo_destino_terraform"
         terraform -chdir=automated-networks/terraform init
         terraform -chdir=automated-networks/terraform apply -auto-approve
     esac
 
 elif [[ "$confirmacao" =~ ^(2|02)$ ]]; then
-    echo -e "\n\033[1;33m- [ Em desenvolvimento... ] \033[0m"
+    echo -e "\n\n\033[1;32m- [ Qual ferramenta será usada para destruir o cenário? ] \033[0m\n"
+    sleep 0.5
+    echo -e "\n\033[1;34m- [ 1 ] : Ansible \033[0m"
+    sleep 0.5
+    echo -e "\n\033[1;34m- [ 2 ] : Terraform \033[0m\n"
+    sleep 0.5
+    echo -e '\n\033[1;35m- [ Por favor, digite o valor correspondente: ] \033[0m'
+    read destroy
+
+    case $destroy in
+    1|01)
+    esac
+	ansible-playbook -i automated-networks/ansible-playbook/hosts automated-networks/ansible-playbook/playbook-destroy.yaml
+    case $destroy in
+    2|02)
+        terraform -chdir=automated-networks/terraform destroy -auto-approve
+    esac
 else
     echo -e "\n\033[1;33m- [ Desculpe, valor não encontrado, encerrando terminal... ] \033[0m"
 fi
